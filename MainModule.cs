@@ -38,13 +38,13 @@ public class MainModule : ModuleBase<SocketCommandContext>
             {
                 await DeleteAgentsStickers();
 
-                var users = new Stack<string>(listUsersFromChannel);
+                var users = new Stack<SocketGuildUser>(listUsersFromChannel);
                 var agents = new Stack<ValorantEntity>(ValorantRoll.RollAgents(users.Count));
                 while (agents.TryPop(out var agent))
                 {
-                    if (users.TryPop(out var username))
+                    if (users.TryPop(out var user))
                     {
-                        var embedBuilder = await GetAgentEmbed(agent, username);
+                        var embedBuilder = await GetAgentEmbed(agent, user.Mention);
 
                         await Context.Channel.SendMessageAsync("", false, embedBuilder.Build());
                     }
@@ -142,7 +142,7 @@ Mapas: {maps.Aggregate((acc, next) => string.IsNullOrEmpty(acc) ? next : acc + "
             return embed;
         }
 
-        public List<string> GetListUsersInContextVoiceChannel(SocketCommandContext context)
+        public List<SocketGuildUser> GetListUsersInContextVoiceChannel(SocketCommandContext context)
         {
             var userChannelInterface = (context.User as IGuildUser)?.VoiceChannel;
             var userChannel = userChannelInterface as Discord.WebSocket.SocketVoiceChannel;
@@ -150,13 +150,12 @@ Mapas: {maps.Aggregate((acc, next) => string.IsNullOrEmpty(acc) ? next : acc + "
             {
                 return userChannel
                         .ConnectedUsers
-                        .Select(u => u != null ? u.Username : "")
-                        .Where(str => !string.IsNullOrEmpty(str))
+                        .Where(u => u != null)
                         .ToList();
             }
             else
             {
-                return new List<string> { };
+                return new List<SocketGuildUser> { };
             }
         }
     }
